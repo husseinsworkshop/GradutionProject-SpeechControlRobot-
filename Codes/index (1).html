@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hospital Robot Voice Dashboard</title>
+  <style>
+    :root{
+      --bg1:#0f172a;
+      --bg2:#111827;
+      --card:rgba(255,255,255,.08);
+      --card-border:rgba(255,255,255,.14);
+      --text:#f8fafc;
+      --muted:#cbd5e1;
+      --primary:#3b82f6;
+      --primary2:#2563eb;
+      --success:#10b981;
+      --danger:#ef4444;
+      --warning:#f59e0b;
+      --purple:#8b5cf6;
+      --cyan:#06b6d4;
+      --shadow:0 12px 30px rgba(0,0,0,.35);
+      --radius:20px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(59,130,246,0.25), transparent 28%),
+        radial-gradient(circle at top left, rgba(139,92,246,0.18), transparent 24%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    .grid-bg{
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
+      background-size:28px 28px;
+      opacity:.22;
+      pointer-events:none;
+    }
+
+    .app{
+      max-width:1400px;
+      margin:0 auto;
+      padding:26px 18px 40px;
+      position:relative;
+      z-index:2;
+    }
+
+    .glass{
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:var(--radius);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      box-shadow:var(--shadow);
+    }
+
+    .panel{
+      padding:24px;
+      animation:fadeUp .85s ease;
+    }
+
+    .main-grid{
+      display:grid;
+      grid-template-columns:1.5fr 1fr;
+      gap:18px;
+    }
+
+    .panel h2{
+      margin-top:0;
+      margin-bottom:14px;
+      font-size:22px;
+    }
+
+    .muted{
+      color:var(--muted);
+    }
+
+    .input-group{
+      margin-bottom:14px;
+    }
+
+    .label{
+      display:block;
+      margin-bottom:8px;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .input, .textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      color:white;
+      border-radius:14px;
+      padding:14px 16px;
+      outline:none;
+      transition:.25s ease;
+      font-size:15px;
+    }
+
+    .input:focus, .textarea:focus{
+      border-color:rgba(59,130,246,.8);
+      box-shadow:0 0 0 4px rgba(59,130,246,.18);
+      transform:translateY(-1px);
+    }
+
+    .textarea{
+      min-height:90px;
+      resize:vertical;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:16px 0;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:13px 18px;
+      font-size:15px;
+      font-weight:bold;
+      color:white;
+      transition:.25s ease;
+      box-shadow:0 6px 18px rgba(0,0,0,.22);
+    }
+
+    .btn:hover{
+      transform:translateY(-2px) scale(1.01);
+    }
+
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary2))}
+    .btn-success{background:linear-gradient(135deg,#10b981,#059669)}
+    .btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626)}
+    .btn-purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+    .btn-cyan{background:linear-gradient(135deg,#06b6d4,#0891b2)}
+    .btn-warning{background:linear-gradient(135deg,#f59e0b,#d97706)}
+
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);
+      margin-bottom:12px;
+    }
+
+    .dot{
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      background:#64748b;
+    }
+
+    .dot.connected{
+      background:var(--success);
+      animation:pulse 1.5s infinite;
+    }
+
+    .dot.error{
+      background:var(--danger);
+    }
+
+    .segmented{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      margin:16px 0 20px;
+    }
+
+    .segment{
+      padding:14px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      text-align:center;
+      cursor:pointer;
+      transition:.22s ease;
+      font-weight:bold;
+    }
+
+    .segment:hover{
+      transform:translateY(-2px);
+      color:white;
+    }
+
+    .segment.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:white;
+      border-color:transparent;
+      box-shadow:0 8px 22px rgba(37,99,235,.28);
+    }
+
+    .info-box{
+      margin-top:15px;
+      padding:16px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);
+      line-height:1.9;
+    }
+
+    .info-box h3{
+      margin-top:0;
+      margin-bottom:10px;
+      font-size:18px;
+    }
+
+    .status-grid{
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:14px;
+      margin-top:16px;
+    }
+
+    .status-card{
+      padding:16px;
+      border-radius:16px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.1);
+      min-height:115px;
+    }
+
+    .status-card .title{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .status-card .content{
+      font-size:16px;
+      line-height:1.75;
+      word-break:break-word;
+    }
+
+    .examples{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .example-tag{
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.1);
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    @keyframes pulse{
+      0%{box-shadow:0 0 0 0 rgba(16,185,129,.65)}
+      70%{box-shadow:0 0 0 12px rgba(16,185,129,0)}
+      100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}
+    }
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(18px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @media(max-width:900px){
+      .main-grid{
+        grid-template-columns:1fr;
+      }
+      .status-grid{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="app">
+    <section class="main-grid">
+      <div class="panel glass">
+        <h2>التواصل مع الروبوت</h2>
+
+        <div class="status-pill">
+          <span id="connectionDot" class="dot"></span>
+          <span id="connectionText">غير مفحوص</span>
+        </div>
+
+        <div class="input-group">
+          <label class="label">IP الخاص بالروبوت أو robot.local</label>
+          <input id="espIpInput" class="input" type="text" placeholder="مثال: 192.168.43.120 أو robot.local">
+        </div>
+
+        <div class="input-group">
+          <label class="label">اختر الشخص المتحكم</label>
+          <div class="segmented">
+            <div class="segment active" data-role="receptionist" onclick="selectRole('receptionist')">موظف الاستقبال</div>
+            <div class="segment" data-role="nurse" onclick="selectRole('nurse')">الممرض</div>
+            <div class="segment" data-role="pharmacist" onclick="selectRole('pharmacist')">الصيدلي</div>
+          </div>
+        </div>
+
+        <div id="roleGuide" class="info-box">
+          </div>
+
+        <div class="input-group" style="margin-top:16px;">
+          <label class="label">إدخال يدوي للنص (للاختبار)</label>
+          <textarea id="manualText" class="textarea" placeholder="اكتب هنا الأمر الذي تريد إرساله"></textarea>
+        </div>
+
+        <div class="controls">
+          <button id="actionBtn" class="btn btn-primary" onclick="toggleSystem()">تشغيل المساعد</button>
+          <button class="btn btn-cyan" onclick="checkConnection()">فحص الاتصال</button>
+          <button class="btn btn-purple" onclick="sendManualText()">إرسال النص اليدوي</button>
+          <button class="btn btn-warning" onclick="clearLogs()">مسح السجل</button>
+        </div>
+
+        <div class="status-grid">
+          <div class="status-card">
+            <div class="title">حالة الاستماع</div>
+            <div id="listenStatus" class="content">المساعد متوقف</div>
+          </div>
+
+          <div class="status-card">
+            <div class="title">النص المسموع</div>
+            <div id="voiceOutput" class="content">سيظهر النص هنا</div>
+          </div>
+
+          <div class="status-card">
+            <div class="title">آخر أمر تم إرساله</div>
+            <div id="lastCommand" class="content">لا يوجد</div>
+          </div>
+
+          <div class="status-card">
+            <div class="title">سجل التنفيذ</div>
+            <div id="debugLog" class="content">جاهز للعمل</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <h2>إرشادات سريعة</h2>
+        <p class="muted">الأوامر المتاحة تتغير حسب الشخص المختار.</p>
+
+        <div id="roleExamples" class="info-box">
+          </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let recognition;
+    let isRunning = false;
+    let selectedRole = "receptionist";
+
+    const roleGuide = document.getElementById("roleGuide");
+    const roleExamples = document.getElementById("roleExamples");
+    const actionBtn = document.getElementById("actionBtn");
+    const espIpInput = document.getElementById("espIpInput");
+    const manualText = document.getElementById("manualText");
+    const listenStatus = document.getElementById("listenStatus");
+    const voiceOutput = document.getElementById("voiceOutput");
+    const lastCommand = document.getElementById("lastCommand");
+    const debugLog = document.getElementById("debugLog");
+    const connectionDot = document.getElementById("connectionDot");
+    const connectionText = document.getElementById("connectionText");
+
+    const roleContent = {
+      receptionist: {
+        title: "تعليمات موظف الاستقبال",
+        guide: `
+          <h3>وظيفة هذا الدور</h3>
+          <div>هذا المستخدم مسؤول عن استدعاء الروبوت إلى الاستقبال، ثم توجيه الزوار إلى الصيدلية أو غرفة الطوارئ.</div>
+          <div class="examples">
+            <span class="example-tag">اذهب إلى الاستقبال</span>
+            <span class="example-tag">روح للصيدلية</span>
+            <span class="example-tag">وديني لغرفة الطوارئ</span>
+          </div>
+        `,
+        examples: `
+          <h3>الأوامر المتاحة</h3>
+          <div>1) لاستدعاء الروبوت من الطوارئ: <b>اذهب إلى الاستقبال</b></div>
+          <div>2) بعد وصوله: <b>روح للصيدلية</b> أو <b>روح لغرفة الطوارئ</b></div>
+          <div>إذا قلت أمر ناقص أو وجهة غير صالحة، سيطلب منك تحديد الوجهة من جديد.</div>
+        `
+      },
+      nurse: {
+        title: "تعليمات الممرض",
+        guide: `
+          <h3>وظيفة هذا الدور</h3>
+          <div>هذا المستخدم مسؤول عن طلب دواء من الصيدلية أو أخذ الدواء من الروبوت عند عودته.</div>
+          <div class="examples">
+            <span class="example-tag">جيب باراسيتامول</span>
+            <span class="example-tag">أحضر بونستان</span>
+            <span class="example-tag">أنطيني</span>
+          </div>
+        `,
+        examples: `
+          <h3>الأوامر المتاحة</h3>
+          <div>1) لطلب دواء: <b>جيب باراسيتامول</b> أو <b>أحضر بونستان</b></div>
+          <div>2) إذا لم تذكر اسم الدواء، سيقول الروبوت: <b>أي دواء تريد أن أجلب؟</b></div>
+          <div>3) عندما يعود الروبوت ومعه الدواء، يمكنك قول: <b>أنطيني</b></div>
+        `
+      },
+      pharmacist: {
+        title: "تعليمات الصيدلي",
+        guide: `
+          <h3>وظيفة هذا الدور</h3>
+          <div>هذا المستخدم مسؤول عن تجهيز الذراع لاستلام الدواء، ثم إصدار أمر الإمساك به وإرجاعه إلى الطوارئ.</div>
+          <div class="examples">
+            <span class="example-tag">خذ</span>
+            <span class="example-tag">أمسك</span>
+          </div>
+        `,
+        examples: `
+          <h3>الأوامر المتاحة</h3>
+          <div>1) إذا قلت <b>خذ</b>، يصبح الروبوت جاهزًا لاستلام الدواء.</div>
+          <div>2) إذا قلت <b>أمسك</b>، يمسك الروبوت الدواء ثم يبدأ الرجوع إلى غرفة الطوارئ.</div>
+        `
+      }
+    };
+
+    function renderRoleUI() {
+      document.querySelectorAll(".segment").forEach(el => {
+        el.classList.toggle("active", el.dataset.role === selectedRole);
+      });
+
+      roleGuide.innerHTML = roleContent[selectedRole].guide;
+      roleExamples.innerHTML = roleContent[selectedRole].examples;
+
+      if (selectedRole === "receptionist") {
+        manualText.placeholder = "مثال: اذهب إلى الاستقبال أو روح للصيدلية";
+      } else if (selectedRole === "nurse") {
+        manualText.placeholder = "مثال: جيب باراسيتامول أو أنطيني";
+      } else {
+        manualText.placeholder = "مثال: خذ أو أمسك";
+      }
+    }
+
+    function selectRole(role) {
+      selectedRole = role;
+      renderRoleUI();
+    }
+
+    function setConnectionState(state, text) {
+      connectionDot.className = "dot";
+      if (state === "connected") connectionDot.classList.add("connected");
+      if (state === "error") connectionDot.classList.add("error");
+      connectionText.innerText = text;
+    }
+
+    function getBaseUrl() {
+      const ip = espIpInput.value.trim();
+      if (!ip) return null;
+      return `http://${ip}`;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = "ar-IQ";
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isRunning = true;
+        listenStatus.innerText = "أنا أسمعك الآن... 🎤";
+        actionBtn.innerText = "إيقاف المساعد";
+        actionBtn.className = "btn btn-danger";
+      };
+
+      recognition.onresult = (event) => {
+        let finalText = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalText += event.results[i][0].transcript + " ";
+          }
+        }
+        const text = finalText.trim().toLowerCase();
+        voiceOutput.innerText = text || voiceOutput.innerText;
+        if (text.length > 0) {
+          sendRecognizedText(text);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isRunning) {
+          debugLog.innerText = "إعادة تشغيل المايك تلقائيًا...";
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {
+              debugLog.innerText = "تعذر إعادة تشغيل المايك";
+            }
+          }, 300);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        debugLog.innerText = "خطأ في المايك: " + e.error;
+      };
+    } else {
+      listenStatus.innerText = "المتصفح لا يدعم التعرف الصوتي";
+      debugLog.innerText = "يفضل استخدام Google Chrome على Android";
+    }
+
+    function toggleSystem() {
+      if (!recognition) {
+        debugLog.innerText = "Speech Recognition غير مدعوم في هذا المتصفح";
+        return;
+      }
+
+      if (!isRunning) {
+        try {
+          recognition.start();
+        } catch (e) {
+          debugLog.innerText = "تعذر تشغيل المايك";
+        }
+      } else {
+        isRunning = false;
+        recognition.stop();
+        listenStatus.innerText = "المساعد متوقف";
+        actionBtn.innerText = "تشغيل المساعد";
+        actionBtn.className = "btn btn-primary";
+      }
+    }
+
+    async function checkConnection() {
+      const baseUrl = getBaseUrl();
+
+      if (!baseUrl) {
+        debugLog.innerText = "أدخل IP أولًا";
+        setConnectionState("error", "لم يتم إدخال IP");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/status`);
+        const text = await response.text();
+
+        if (response.ok && text.toLowerCase().includes("connected")) {
+          debugLog.innerText = "فحص الاتصال ناجح: " + text;
+          setConnectionState("connected", "الاتصال ناجح");
+        } else {
+          debugLog.innerText = "تم الوصول ولكن الرد غير متوقع: " + text;
+          setConnectionState("error", "رد غير متوقع");
+        }
+      } catch (err) {
+        debugLog.innerText = "فشل الاتصال بالـ ESP32";
+        setConnectionState("error", "فشل الاتصال");
+      }
+    }
+
+    async function sendRecognizedText(fullText) {
+      const baseUrl = getBaseUrl();
+
+      if (!baseUrl) {
+        debugLog.innerText = "رجاءً أدخل IP مال الـ ESP32 أو robot.local";
+        return;
+      }
+
+      lastCommand.innerText = `[${selectedRole === 'receptionist' ? 'موظف الاستقبال' : selectedRole === 'nurse' ? 'الممرض' : 'الصيدلي'}] ${fullText}`;
+
+      try {
+        const response = await fetch(`${baseUrl}/command?role=${encodeURIComponent(selectedRole)}&text=${encodeURIComponent(fullText)}`);
+        const text = await response.text();
+        debugLog.innerText = "تم إرسال النص بنجاح | رد ESP32: " + text;
+      } catch (err) {
+        debugLog.innerText = "فشل إرسال النص إلى ESP32";
+      }
+    }
+
+    function sendManualText() {
+      const text = manualText.value.trim();
+      if (!text) {
+        debugLog.innerText = "اكتب نصًا أولًا قبل الإرسال";
+        return;
+      }
+      voiceOutput.innerText = text;
+      sendRecognizedText(text);
+    }
+
+    function clearLogs() {
+      voiceOutput.innerText = "سيظهر النص هنا";
+      lastCommand.innerText = "لا يوجد";
+      debugLog.innerText = "تم مسح السجل";
+    }
+
+    renderRoleUI();
+  </script>
+</body>
+</html>
